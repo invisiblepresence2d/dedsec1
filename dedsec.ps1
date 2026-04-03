@@ -21,46 +21,32 @@ Write-Host "[>] Iniciando intrusión en Spotify..." -ForegroundColor Green
 Write-Host ""
 
 # 1. Cerrar Spotify
-Write-Host "[1/4] Cerrando Spotify..." -ForegroundColor Yellow
+Write-Host "[1/3] Cerrando Spotify..." -ForegroundColor Yellow
 Get-Process "Spotify" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
-# 2. Configurar PowerShell para ejecutar scripts
-Write-Host "[2/4] Configurando permisos..." -ForegroundColor Yellow
+# 2. Instalar Spicetify (el instalador oficial)
+Write-Host "[2/3] Infectando sistema..." -ForegroundColor Yellow
 Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
 
-# 3. Instalar el núcleo (usando el instalador oficial, pero en SILENCIO)
-Write-Host "[3/4] Infectando sistema..." -ForegroundColor Yellow
+# Descargar y ejecutar el instalador de Spicetify
+$spicetifyInstaller = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" -UseBasicParsing
+$spicetifyCode = $spicetifyInstaller.Content
+$tempSpice = "$env:TEMP\spice_install.ps1"
+$spicetifyCode | Out-File -FilePath $tempSpice -Encoding UTF8
+& $tempSpice
+Remove-Item $tempSpice -Force
 
-# Descargar el script oficial de instalación de Spicetify
-$installerScript = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" -UseBasicParsing
-$scriptContent = $installerScript.Content
+# 3. Instalar Marketplace (automáticamente sin preguntas)
+Write-Host "[3/3] Instalando DedSec Market..." -ForegroundColor Yellow
 
-# Modificar el script para que sea completamente automático (sin preguntas)
-$scriptContent = $scriptContent -replace 'Read-Host.*', '$answer = "Y"'
+# Este es el comando que instala el Marketplace sin preguntar
+# Primero aseguramos que spicetify está en el PATH
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
-# Guardar y ejecutar el script modificado en segundo plano, ocultando su salida
-$tempScript = "$env:TEMP\dedsec_installer.ps1"
-$scriptContent | Out-File -FilePath $tempScript -Encoding UTF8
-& $tempScript 2>&1 | Out-Null
-Remove-Item $tempScript -Force
-
-# 4. Instalar el Marketplace (también en silencio)
-Write-Host "[4/4] Instalando DedSec Market..." -ForegroundColor Yellow
-
-$marketScript = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.ps1" -UseBasicParsing
-$marketContent = $marketScript.Content
-$marketContent = $marketContent -replace 'Read-Host.*', '$answer = "Y"'
-
-$tempMarket = "$env:TEMP\dedsec_market.ps1"
-$marketContent | Out-File -FilePath $tempMarket -Encoding UTF8
-& $tempMarket 2>&1 | Out-Null
-Remove-Item $tempMarket -Force
-
-# Aplicar los cambios
-Write-Host ""
-Write-Host "[*] Aplicando parches DedSec..." -ForegroundColor Yellow
-spicetify apply 2>&1 | Out-Null
+# Instalar Marketplace directamente
+& spicetify config custom_apps marketplace https://github.com/spicetify/marketplace
+& spicetify apply
 
 Write-Host ""
 Write-Host "[✓] ¡Spotify ha sido comprometido por DedSec!" -ForegroundColor Green
@@ -73,8 +59,4 @@ Write-Host ""
 Write-Host "╔════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║  📌 Para abrir DedSec Market:                          ║" -ForegroundColor Cyan
 Write-Host "║     Haz click en el icono del carrito 🛒              ║" -ForegroundColor White
-Write-Host "║                                                       ║" -ForegroundColor White
-Write-Host "║  📌 COMANDOS DEDSEC:                                  ║" -ForegroundColor Cyan
-Write-Host "║     spicetify apply    → Aplicar cambios              ║" -ForegroundColor White
-Write-Host "║     spicetify backup   → Hacer backup                 ║" -ForegroundColor White
 Write-Host "╚════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
