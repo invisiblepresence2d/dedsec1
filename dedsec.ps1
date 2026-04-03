@@ -12,7 +12,7 @@ Write-Host @"
                                                                       
                       Spotify Follado by DedSec       
 
-                      Porgramado Por invisiblepresence
+                     
 
 "@ -ForegroundColor Cyan
 
