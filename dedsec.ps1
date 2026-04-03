@@ -1,91 +1,125 @@
 # dedsec.ps1 - DedSec Spotify Toolkit
-# Creado por InvisiblePresence
+# by InvisiblePresence
 
+# ============================================
+# BANNER DEDSEC
+# ============================================
 Write-Host @"
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                      ║
-║     ██████╗ ███████╗██████╗ ███████╗███████╗ ██████╗                 ║
-║     ██╔══██╗██╔════╝██╔══██╗██╔════╝██╔════╝██╔════╝                 ║
-║     ██║  ██║█████╗  ██║  ██║███████╗███████╗██║                      ║
-║     ██║  ██║██╔══╝  ██║  ██║╚════██║╚════██║██║                      ║
-║     ██████╔╝███████╗██████╔╝███████║███████║╚██████╗                 ║
-║     ╚═════╝ ╚══════╝╚═════╝ ╚══════╝╚══════╝ ╚═════╝                 ║
 ║                                                                      ║
 ║                           D E D S E C                                ║
 ║                                                                      ║
-║                      Spotify Toolkit by DedSec                       ║
+║                      Spotify Follado by DedSec                       ║
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
 "@ -ForegroundColor Cyan
 
+Write-Host ""
 Write-Host "[>] Iniciando intrusión en Spotify..." -ForegroundColor Green
 Write-Host ""
 
-# Cerrar Spotify
-Write-Host "[1/6] Cerrando Spotify..." -ForegroundColor Yellow
+# ============================================
+# 1. Cerrar Spotify
+# ============================================
+Write-Host "[1/5] Cerrando Spotify..." -ForegroundColor Yellow
 Get-Process "Spotify" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
-# Instalar Spicetify (necesario)
-Write-Host "[2/6] Instalando núcleo DedSec..." -ForegroundColor Yellow
-Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
-iwr -useb https://raw.githubusercontent.com/spicetify/cli/main/install.ps1 | iex
+# ============================================
+# 2. Instalar núcleo DedSec (descarga silenciosa)
+# ============================================
+Write-Host "[2/5] Descargando componentes..." -ForegroundColor Yellow
 
-# Crear carpetas
-Write-Host "[3/6] Creando estructura DedSec..." -ForegroundColor Yellow
-$dedsecAppDir = "$env:USERPROFILE\.spicetify\CustomApps\dedsec-market"
-$extensionsDir = "$env:USERPROFILE\.spicetify\Extensions"
-New-Item -ItemType Directory -Force -Path $dedsecAppDir | Out-Null
-New-Item -ItemType Directory -Force -Path "$dedsecAppDir\icons" | Out-Null
-New-Item -ItemType Directory -Force -Path $extensionsDir | Out-Null
+$dedsecDir = "$env:USERPROFILE\.dedsec"
+$spicetifyDir = "$env:USERPROFILE\spicetify-cli"
 
-# Descargar archivos del marketplace desde tu GitHub
-Write-Host "[4/6] Descargando DedSec Market..." -ForegroundColor Yellow
+# Crear directorios
+New-Item -ItemType Directory -Force -Path $dedsecDir | Out-Null
+New-Item -ItemType Directory -Force -Path $spicetifyDir | Out-Null
 
-# manifest.json
-$manifestUrl = "https://raw.githubusercontent.com/invisiblepresence/dedsec/main/DedSecMarket/manifest.json"
-Invoke-WebRequest -Uri $manifestUrl -OutFile "$dedsecAppDir\manifest.json"
+# Descargar Spicetify CLI sin mostrar nada
+$spicetifyUrl = "https://github.com/spicetify/cli/releases/latest/download/spicetify-x64.zip"
+$zipPath = "$env:TEMP\dedsec_core.zip"
 
-# index.js
-$indexUrl = "https://raw.githubusercontent.com/invisiblepresence/dedsec/main/DedSecMarket/index.js"
-Invoke-WebRequest -Uri $indexUrl -OutFile "$dedsecAppDir\index.js"
+# Descargar con barra de progreso oculta
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -Uri $spicetifyUrl -OutFile $zipPath -UseBasicParsing
+$ProgressPreference = 'Continue'
 
-# styles.css
-$stylesUrl = "https://raw.githubusercontent.com/invisiblepresence/dedsec/main/DedSecMarket/styles.css"
-Invoke-WebRequest -Uri $stylesUrl -OutFile "$dedsecAppDir\styles.css"
+# Extraer
+Expand-Archive -Path $zipPath -DestinationPath $spicetifyDir -Force
+Remove-Item $zipPath -Force
 
-# Descargar extensiones
-Write-Host "[5/6] Descargando extensiones DedSec..." -ForegroundColor Yellow
+# Agregar al PATH
+$env:Path += ";$spicetifyDir"
+[Environment]::SetEnvironmentVariable("Path", $env:Path, "User")
 
-$extensions = @(
-    "beautiful-lyrics",
-    "adblocker", 
-    "shuffle-plus",
-    "dedsec-banner"
-)
+# ============================================
+# 3. Instalar DedSec Market (sin preguntas)
+# ============================================
+Write-Host "[3/5] Instalando DedSec Market..." -ForegroundColor Yellow
 
-foreach ($ext in $extensions) {
-    $extUrl = "https://raw.githubusercontent.com/invisiblepresence/dedsec/main/extensions/$ext.js"
-    Invoke-WebRequest -Uri $extUrl -OutFile "$extensionsDir\$ext.js"
-    Write-Host "    ✓ $ext.js" -ForegroundColor Green
-}
+# Descargar script de marketplace
+$marketScript = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.ps1" -UseBasicParsing
+$marketCode = $marketScript.Content
 
-# Configurar Spicetify
-Write-Host "[6/6] Configurando DedSec en Spotify..." -ForegroundColor Yellow
+# Eliminar cualquier mención de Spicetify del código
+$marketCode = $marketCode -replace 'Spicetify', 'DedSec'
+$marketCode = $marketCode -replace 'spicetify', 'dedsec'
+
+# Forzar respuesta "Yes" a cualquier pregunta
+$marketCode = $marketCode -replace 'Read-Host.*', '$answer = "Y"'
+
+# Ejecutar en silencio
+$tempMarket = "$env:TEMP\dedsec_market.ps1"
+$marketCode | Out-File -FilePath $tempMarket -Encoding UTF8
+& $tempMarket
+Remove-Item $tempMarket -Force
+
+# ============================================
+# 4. Aplicar branding DedSec
+# ============================================
+Write-Host "[4/5] Aplicando marca DedSec..." -ForegroundColor Yellow
+
+# Crear archivo de marca
+$brandFile = "$dedsecDir\dedsec_branding.txt"
+@"
+╔══════════════════════════════════════════════════════════╗
+║   Spotify ha sido comprometido por DedSec                ║
+║   Toolkit creado por: InvisiblePresence                 ║
+║   Fecha de intrusión: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")    ║
+║                                                          ║
+║   "We are DedSec. We are everywhere."                   ║
+╚══════════════════════════════════════════════════════════╝
+"@ | Out-File -FilePath $brandFile -Encoding UTF8
+
+# Configurar tema de DedSec
 $configFile = "$env:USERPROFILE\.spicetify\config.ini"
-$configContent = Get-Content $configFile -Raw
-if ($configContent -notmatch "custom_apps") {
-    Add-Content $configFile "`ncustom_apps = dedsec-market"
+if (Test-Path $configFile) {
+    $configContent = Get-Content $configFile -Raw
+    # Reemplazar cualquier mención
+    $configContent = $configContent -replace 'spicetify', 'dedsec'
+    $configContent | Set-Content $configFile
 }
 
-# Aplicar cambios
-spicetify apply
+# ============================================
+# 5. Aplicar cambios
+# ============================================
+Write-Host "[5/5] Aplicando cambios a Spotify..." -ForegroundColor Yellow
 
+# Ejecutar apply sin mostrar salida
+& "$spicetifyDir\spicetify.exe" apply 2>&1 | Out-Null
+
+# ============================================
+# FINALIZAR
+# ============================================
 Write-Host ""
 Write-Host "[✓] ¡Spotify ha sido comprometido por DedSec!" -ForegroundColor Green
 Write-Host "[✓] Toolkit creado por InvisiblePresence" -ForegroundColor Green
 Write-Host ""
-Write-Host "[!] Abriendo Spotify..." -ForegroundColor Yellow
+
+# Abrir Spotify
 Start-Process "spotify"
 
 Write-Host ""
@@ -93,7 +127,12 @@ Write-Host "╔═════════════════════�
 Write-Host "║  📌 Para abrir DedSec Market:                          ║" -ForegroundColor Cyan
 Write-Host "║     Haz click en el icono del carrito 🛒              ║" -ForegroundColor White
 Write-Host "║                                                       ║" -ForegroundColor White
-Write-Host "║  📌 Comandos útiles:                                  ║" -ForegroundColor Cyan
-Write-Host "║     spicetify apply    → Aplicar cambios              ║" -ForegroundColor White
-Write-Host "║     spicetify backup   → Hacer backup                 ║" -ForegroundColor White
+Write-Host "║  📌 Comandos DedSec:                                  ║" -ForegroundColor Cyan
+Write-Host "║     dedsec apply    → Aplicar cambios                 ║" -ForegroundColor White
+Write-Host "║     dedsec backup   → Hacer backup                    ║" -ForegroundColor White
 Write-Host "╚════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+
+Write-Host ""
+Write-Host "[!] NOTA: Para usar los comandos, ejecuta primero:" -ForegroundColor Yellow
+Write-Host "    cd C:\Users\$env:USERNAME\spicetify-cli" -ForegroundColor White
+Write-Host "    .\spicetify.exe [comando]" -ForegroundColor White
