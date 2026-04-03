@@ -21,36 +21,51 @@ Write-Host "[>] Iniciando intrusión en Spotify..." -ForegroundColor Green
 Write-Host ""
 
 # 1. Cerrar Spotify
-Write-Host "[1/3] Cerrando Spotify..." -ForegroundColor Yellow
+Write-Host "[1/4] Cerrando Spotify..." -ForegroundColor Yellow
 Get-Process "Spotify" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
-# 2. Instalar Spicetify (el instalador oficial)
-Write-Host "[2/3] Infectando sistema..." -ForegroundColor Yellow
-Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force
+# 2. Crear directorios
+Write-Host "[2/4] Creando directorios DedSec..." -ForegroundColor Yellow
+$dedsecDir = "$env:USERPROFILE\.dedsec"
+$dedsecBin = "$dedsecDir\bin"
+New-Item -ItemType Directory -Force -Path $dedsecBin | Out-Null
 
-# Descargar y ejecutar el instalador de Spicetify
-$spicetifyInstaller = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/spicetify/cli/main/install.ps1" -UseBasicParsing
-$spicetifyCode = $spicetifyInstaller.Content
-$tempSpice = "$env:TEMP\spice_install.ps1"
-$spicetifyCode | Out-File -FilePath $tempSpice -Encoding UTF8
-& $tempSpice
-Remove-Item $tempSpice -Force
+# 3. Descargar archivos (usando URLs que funcionan)
+Write-Host "[3/4] Descargando componentes DedSec..." -ForegroundColor Yellow
 
-# 3. Instalar Marketplace (automáticamente sin preguntas)
-Write-Host "[3/3] Instalando DedSec Market..." -ForegroundColor Yellow
+$ProgressPreference = 'SilentlyContinue'
 
-# Este es el comando que instala el Marketplace sin preguntar
-# Primero aseguramos que spicetify está en el PATH
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+# Descargar Spicetify CLI desde la URL correcta
+$zipUrl = "https://github.com/spicetify/cli/releases/download/v2.43.1/spicetify-2.43.1-windows-x64.zip"
+$zipPath = "$env:TEMP\dedsec.zip"
 
-# Instalar Marketplace directamente
-& spicetify config custom_apps marketplace https://github.com/spicetify/marketplace
-& spicetify apply
+try {
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+    Expand-Archive -Path $zipPath -DestinationPath $dedsecBin -Force
+    Remove-Item $zipPath -Force
+} catch {
+    Write-Host "[!] Error al descargar componentes" -ForegroundColor Red
+    exit 1
+}
+
+# 4. Aplicar cambios
+Write-Host "[4/4] Aplicando parches DedSec..." -ForegroundColor Yellow
+
+# Ejecutar el comando sin mostrar nada
+& "$dedsecBin\spicetify.exe" apply 2>&1 | Out-Null
+
+# Crear archivo de marca
+$brandFile = "$dedsecDir\dedsec_branding.txt"
+@"
+DEDSEC SPOTIFY TOOLKIT
+Comprometido por DedSec
+Creado por InvisiblePresence
+Fecha: $(Get-Date)
+"@ | Out-File -FilePath $brandFile -Encoding UTF8
 
 Write-Host ""
 Write-Host "[✓] ¡Spotify ha sido comprometido por DedSec!" -ForegroundColor Green
-Write-Host "[✓] Toolkit creado por InvisiblePresence" -ForegroundColor Green
 Write-Host ""
 
 Start-Process "spotify"
