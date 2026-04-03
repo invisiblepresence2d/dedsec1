@@ -5,14 +5,15 @@
 # BANNER DEDSEC
 # ============================================
 Write-Host @"
-╔══════════════════════════════════════════════════════════════════════╗
-║                                                                      ║
-║                                                                      ║
-║                           D E D S E C                                ║
-║                                                                      ║
-║                      Spotify Follado by DedSec                       ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝
+
+                                                                      
+                                                                   
+                             D E D S E C                                
+                                                                      
+                      Spotify Follado by DedSec       
+
+                      Porgramado Por invisiblepresence
+
 "@ -ForegroundColor Cyan
 
 Write-Host ""
