@@ -17,7 +17,7 @@ Write-Host @"
 "@ -ForegroundColor Cyan
 
 Write-Host ""
-Write-Host "[>] Iniciando intrusión en Spotify..." -ForegroundColor Green
+Write-Host "[>] Estamos entrando en la base de datos de Spotify..." -ForegroundColor Green
 Write-Host ""
 
 # 1. Cerrar Spotify
@@ -65,13 +65,13 @@ Fecha: $(Get-Date)
 "@ | Out-File -FilePath $brandFile -Encoding UTF8
 
 Write-Host ""
-Write-Host "[✓] ¡Spotify ha sido comprometido por DedSec!" -ForegroundColor Green
+Write-Host "[✓] ¡Spotify ha sido Follado por DedSec!" -ForegroundColor Green
 Write-Host ""
 
 Start-Process "spotify"
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║  📌 Para abrir DedSec Market:                          ║" -ForegroundColor Cyan
-Write-Host "║     Haz click en el icono del carrito 🛒              ║" -ForegroundColor White
-Write-Host "╚════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "" -ForegroundColor Cyan
+Write-Host "  📌 Para abrir DedSec Market:" -ForegroundColor Cyan
+Write-Host "     Haz click en el icono del carrito 🛒" -ForegroundColor White
+Write-Host "" -ForegroundColor Cyan
