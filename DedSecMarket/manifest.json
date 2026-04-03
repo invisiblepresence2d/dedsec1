@@ -1,0 +1,6 @@
+{
+    "name": "DedSec Market",
+    "description": "Marketplace de DedSec",
+    "main": "index.js",
+    "authors": [{"name": "InvisiblePresence"}]
+}
